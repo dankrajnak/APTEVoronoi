@@ -36,8 +36,6 @@ const initialPositions = [];
 points.forEach((point) => initialPositions.push(point.slice()));
 
 let polygons = voronoi.polygons(points);
-console.log("HEY");
-console.log(polygons);
 
 //DRAW THE DIAGRAM
 const canvas = d3.select('body').append('canvas').attr('width', width).attr('height', height);
@@ -70,13 +68,10 @@ const SPEEDS = [20000, 1000, 100];
 let SPEED = SPEEDS[0];
 
 d3.select('#container').on('click', ()=>{
-    console.log('CHANGE SPEED');
-    console.log(SPEED);
     let index = SPEEDS.findIndex((item) => item == SPEED)+1;
     if(index == SPEEDS.length)
         index = 0;
     SPEED = SPEEDS[index];
-    console.log(SPEED);
 })
 
 //Interpolates between colors
