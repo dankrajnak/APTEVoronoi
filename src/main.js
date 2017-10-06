@@ -1,5 +1,5 @@
-const width = window.innerWidth;
-const height = window.innerHeight;
+let width = window.innerWidth;
+let height = window.innerHeight;
 const radius = 40;
 const margins = {
     top: 40,
@@ -12,36 +12,37 @@ d3.select('svg').attr('width', width / 3);
 
 
 
-const voronoi = d3.voronoi()
-    .extent([[-1, -1], [width + 1, height + 1]]);
 
-const pointGenerator = new PoissonDisk(width, height, radius);
+let pointGenerator = new PoissonDisk(width, height, radius);
 let points = pointGenerator.generatePoints();
 
 //Fisher-Yates Shuffle algorithm. 
 function shuffle(array) {
-    var number = points.length,
+    var index = points.length,
         lastItem, randomItem;
-    while (number) {
-        randomItem = Math.random() * number-- | 0; // 0 ≤ i < n
-        lastItem = array[number];
-        array[number] = array[randomItem];
+    while (index) {
+        randomItem = Math.random() * index-- | 0; // 0 ≤ randomItem < index
+        lastItem = array[index];
+        array[index] = array[randomItem];
         array[randomItem] = lastItem;
     }
     return array;
 }
 shuffle(points);
-const initialPositions = [];
+let initialPositions = [];
 //Deep copy.
 points.forEach((point) => initialPositions.push(point.slice()));
 
+let voronoi = d3.voronoi()
+    .extent([[-1, -1], [width + 1, height + 1]]);
 let polygons = voronoi.polygons(points);
 
 //DRAW THE DIAGRAM
-const canvas = d3.select('body').append('canvas').attr('width', width).attr('height', height);
+const canvas = d3.select('#fullscreen').append('canvas').attr('width', width).attr('height', height);
 const context = canvas.node().getContext('2d');
 
 d3.interval((elapsed) => {
+    //SPEED = 20000-(elapsed*20000/180000+1000)
     //DRAW
     polygons.forEach((polygon, index) => {
         context.beginPath();
@@ -67,12 +68,50 @@ d3.interval((elapsed) => {
 const SPEEDS = [20000, 1000, 100];
 let SPEED = SPEEDS[0];
 
-d3.select('#container').on('click', ()=>{
-    let index = SPEEDS.findIndex((item) => item == SPEED)+1;
-    if(index == SPEEDS.length)
+d3.select('body').on('click', () => {
+    let index = SPEEDS.findIndex((item) => item == SPEED) + 1;
+    if (index == SPEEDS.length)
         index = 0;
     SPEED = SPEEDS[index];
 })
+
+document.addEventListener('keydown', (event) => {
+    if(event.keyCode == 32)
+        toggleFullScreen(document.querySelector('#fullscreen'));
+})
+
+function toggleFullScreen(element) {
+    if (!document.mozFullScreen && !document.webkitFullScreen) {
+      if (element.mozRequestFullScreen) {
+        element.mozRequestFullScreen();
+      } else {
+        element.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+      }
+    } else {
+      if (element.mozCancelFullScreen) {
+        element.mozCancelFullScreen();
+      } else {
+        element.webkitCancelFullScreen();
+      }
+    }
+    resize();
+}
+
+function resize(){
+    //width = document.width;
+    //height = document.height;
+    height = 900;
+    canvas.attr('width', width).attr('height', height);
+    pointGenerator = new PoissonDisk(width, height, radius);
+    points = pointGenerator.generatePoints();
+    shuffle(points);
+    initialPositions = [];
+    //Deep copy.
+    points.forEach((point) => initialPositions.push(point.slice()));
+    voronoi = d3.voronoi().extent([[-1, -1], [width + 1, height + 1]]);
+    polygons = voronoi.polygons(points);
+    
+}
 
 //Interpolates between colors
 function createColor(value, transparency = 255) {
@@ -181,10 +220,10 @@ function createColor(value, transparency = 255) {
 
 function makeItWavy(xpos, elapsed) {
 
-    var numberOfWaves = 3;
+    var numberOfWaves = 2;
     //numberOfWaves *= Math.sin(elapsed/4000)+2;
-    var period = width/numberOfWaves;
+    var period = width / numberOfWaves;
     var amplitude = 50;
-        
-    return amplitude* Math.sin((2*Math.PI/period)*xpos-elapsed/SPEED);
+
+    return amplitude * Math.sin((2 * Math.PI / period) * xpos - elapsed / SPEED);
 }
